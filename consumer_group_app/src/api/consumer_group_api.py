@@ -48,7 +48,7 @@ def register():
         logging.exception(f"Failed to add consumer to Redis list for consumer id {consumer_id}. Ref: {uuid_ref}", ex)
         error_message = f"Failed to register consumer! Use Ref for details: {uuid_ref}"
         response = jsonify({"error": error_message})
-        response.status_code = 400
+        response.status_code = 500
         return response
 
 @rest_api_app.post('/unregister')
@@ -84,7 +84,7 @@ def unregister():
         error_message = f"Failed to unregister consumer! Use Ref for details: {uuid_ref}"
 
         response = jsonify({"error": error_message})
-        response.status_code = 400
+        response.status_code = 500
         return response
 
 @rest_api_app.post('/checkMembership')
@@ -124,7 +124,7 @@ def check_membership():
         error_message = f"Failed to unregister consumer! Use Ref for details: {uuid_ref}"
 
         response = jsonify({"error": error_message})
-        response.status_code = 400
+        response.status_code = 500
         return response
 
 def validate_consumer_data(json_request_data):

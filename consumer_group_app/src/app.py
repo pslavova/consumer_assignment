@@ -9,7 +9,7 @@ from pathlib import Path
 from redis.client import PubSub
 from config_parser import Configs, load_configs
 from api.consumer_group_api import rest_api_app
-from consumer_group.consumers_monitor import ConsumerRegistrationMonitor
+from consumer_group.consumers_monitor import ConsumerRegistrationsMonitor
 from consumer_group.consumer_group import ConsumersGroup
 from consumer.consumer_client import ConsumerClient
 from constants import CONSUMER_GROUP_CONTEXT_KEY
@@ -95,7 +95,7 @@ def run():
                                             kwargs={"pubsub":pubsub, "consumer_group":consumer_group})
     msg_processor_thread.start()
 
-    consumers_monitor = ConsumerRegistrationMonitor(consumer_group=consumer_group)
+    consumers_monitor = ConsumerRegistrationsMonitor(consumer_group=consumer_group)
     consumers_monitoring_thread = threading.Thread(name= "ConsumersMonitoring", target=consumers_monitor.run_monitoring)
     consumers_monitoring_thread.start()
 

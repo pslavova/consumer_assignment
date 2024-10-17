@@ -7,7 +7,7 @@ from consumer_group.consumer_group import ConsumersGroup
 # TODO move to config.properties
 CHECK_INTERVAL_IN_MINUTES = 5
 
-class ConsumerRegistrationMonitor:
+class ConsumerRegistrationsMonitor:
     def __init__(self, consumer_group: ConsumersGroup):
         self.consumer_group = consumer_group
 

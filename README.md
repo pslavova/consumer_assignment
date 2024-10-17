@@ -19,10 +19,10 @@ There is a thread running while the application runs to monitor the consumer's r
 #### Rest API
 The Consumer application exposes REST Service (implemented with Flask) to allow connections from the ConsumerGroupApplication.
 There are two apis exposed:
-* /health
+* **/health**
   * GET method
   * Allows the consumer group to validate that this consumer is reachable and can be used for message processing
-* /processMessage
+* **/processMessage**
   * POST method
   * Used to send messages for processing by the Consumer Group Application
   * Expects body with content type 'application/json'
@@ -33,18 +33,76 @@ There are two apis exposed:
     * Response Code 400 when the body doesn't match the expected format or is not with content type 'application/json'
 
 #### Scalability
-Multiple instances can run in parallel. Just the reported host and port for the REST Service should differ.
+Application can be scaled horizontally.
+In order to have the multiple instances working correctly - reported host and port for the REST Service should differ in the different instances.
 
 ### Consumer Group Application
 #### Description
+The Consumer Group Application handles the channel connection with Redis and the management of the list with the message consumers as well as the message distribution to consumers.
 
-#### Registration in the Consumer Group Application
+#### Consumers List management
+When the application starts it checks the list with consumers - for all existing consumers in the list, consumer health check is performed and the unavailable consumers are removed from the list.<br>
+The consumers health check is performed each 5 minutes after the initial one.
+
+On first application start the list will be empty /even when it does not yet exist - it reports empty/.<br>
+Once actual consumers start to register themselves, the list will be populated with values.
+
+#### Statistics reporting
+While the application is running there will be a separate thread running that will calculate statistics for the processed messages per second.
+The statistics will be logged each 3 seconds.
+
+#### Listening for messages and distributing the received message to consumers
+When the application is started an ConsumerGroup object is created - it subscribes to the specified Redis channel.
+In a separate thread it starts listening for messages.<br>
+Once a new message is received, it selects a random consumer registered in the consumer group and sends it the message for processing.
 
 #### Rest API
+The Consumer Group Application exposes REST Service (implemented with Flask) to allow connections from the Consumers.
+Below are the exposed apis:
+* **/register**
+  * POST method
+  * Used to register a consumer in the consumer group
+  * Expects body with content type 'application/json'
+  * Expected body format:
+      `{"consumer_id": "consumer_host_address:consumer_port"}`
+  * Returns:
+    * Response Code 200 and message for success when the consumer is successfully added to the consumer group
+    * Response Code 400 when the body doesn't match the expected format or is not with content type 'application/json'
+    * Response Code 500 when an exception is throw during execution (no free slots in the consumer group is included here).
+* **/unregister**
+  * POST method
+  * Used to unregister a consumer from the consumer group
+  * Expects body with content type 'application/json'
+  * Expected body format:
+      `{"consumer_id": "consumer_host_address:consumer_port"}`
+  * Returns:
+    * Response Code 200 and message for success when consumer is successfully removed from the consumer group
+    * Response Code 400 when the body doesn't match the expected format or is not with content type 'application/json'
+    * Response Code 500 when an exception is throw during execution
+* **/checkMembership**
+  * POST method
+  * Used to check if a consumer is already a member of the consumer group
+  * Expects body with content type 'application/json'
+  * Expected body format:
+      `{"consumer_id": "consumer_host_address:consumer_port"}`
+  * Returns:
+    * Response Code 200 and message for success if the consumer is found in the consumer group
+    * Response Code 404 when the consumer is not found.
+    * Response Code 400 when the body doesn't match the expected format or is not with content type 'application/json'
+    * Response Code 500 when an exception is throw during execution
 
 #### Scalability
+If the application is horizontally scaled it won't work correctly.
 
 ### Possible improvements
+* Redesign the Consumer Group app to be able to scale horizontally.
+  * The app saves the received messages in a Redis queue only if the message is not already there /list for which we will use the FIFO concepts/, instead of sending it directly to the consumer.
+  * The consumer app should have an load balancer address for the consumer group application.
+  * The consumers should pull messages from the Redis queue instead of waiting for requests from the consumer group.
+  * With this approach it won't be needed to keep track of the active consumers.
+* Add monitoring of the parallel threads in both application - if any of the threads dies, it should be restarted.
+* Add retry mechanism for message sending - if a sent REST request to some consumer fails - try another one from the consumer group list.
+
 ### How to run services locally
 * Configure virtual environment
   * `python3 -m venv .redis_venv`
