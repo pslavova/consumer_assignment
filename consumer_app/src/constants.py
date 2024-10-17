@@ -1,0 +1,1 @@
+CONSUMER_CONTEXT_KEY = "consumer"

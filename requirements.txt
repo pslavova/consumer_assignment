@@ -1,0 +1,9 @@
+#db lib
+redis
+
+#rest api related libs
+flask
+requests
+
+#serialization & deserialization
+marshmallow
