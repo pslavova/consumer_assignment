@@ -37,18 +37,23 @@ def listen_for_messages(pubsub: PubSub, consumer_group: ConsumersGroup):
     global TOTAL_FAILED_MESSAGES
 
     logging.info("Starting MSG listener...")
-    for msg in pubsub.listen():
+    while True:
         try:
-            msg_data = json.loads(msg["data"].decode())
-            consumer_id = consumer_group.get_consumer()
-            consumer_host, consumer_port = (consumer_id.split(":"))
-            consumer_client = ConsumerClient(consumer_host, consumer_port)
-            logging.info(f"Sending msg '{msg_data}' to consumer with id: {consumer_id}")
-            consumer_client.process_msg(msg_data)
-            TOTAL_PROCESSED_MESSAGES += 1
-        except Exception as ex:
-            logging.exception(f"Failed to process message: {msg}", ex)
-            TOTAL_FAILED_MESSAGES += 1
+            for msg in pubsub.listen():
+                try:
+                    msg_data = json.loads(msg["data"].decode())
+                    consumer_id = consumer_group.get_consumer()
+                    consumer_host, consumer_port = (consumer_id.split(":"))
+                    consumer_client = ConsumerClient(consumer_host, consumer_port)
+                    logging.info(f"Sending msg '{msg_data}' to consumer with id: {consumer_id}")
+                    consumer_client.process_msg(msg_data)
+                    TOTAL_PROCESSED_MESSAGES += 1
+                except Exception as ex:
+                    logging.exception(f"Failed to process message: {msg}", ex)
+                    TOTAL_FAILED_MESSAGES += 1
+        except:
+            logging.exception(f"Listen for messages encountered a failure. Will try to connect again in 5 seconds", ex)
+            time.sleep(5)
 
 def print_statistics():
     global TOTAL_PROCESSED_MESSAGES

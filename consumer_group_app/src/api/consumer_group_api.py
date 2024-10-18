@@ -3,6 +3,7 @@ import logging
 from flask import (
     g, Flask, jsonify, request
 )
+from werkzeug.exceptions import HTTPException
 from marshmallow import Schema, fields
 
 from constants import CONSUMER_GROUP_CONTEXT_KEY
@@ -35,6 +36,7 @@ def register():
             return response
 
         consumer_id = data.get("consumer_id")
+        print(rest_api_app)
         consumer_group = getattr(rest_api_app, CONSUMER_GROUP_CONTEXT_KEY)
 
         consumer_group.add_consumer(consumer_id)
@@ -122,10 +124,25 @@ def check_membership():
         uuid_ref = str(uuid.uuid4())
         logging.exception(f"Failed to remove consumer from Redis list for consumer id {consumer_id}. Ref: {uuid_ref}", ex)
         error_message = f"Failed to unregister consumer! Use Ref for details: {uuid_ref}"
-
-        response = jsonify({"error": error_message})
+        response.data = jsonify({"error": error_message})
         response.status_code = 500
+        print(response)
         return response
+
+@rest_api_app.errorhandler(HTTPException)
+def handle_exception(e):
+    """Return JSON instead of HTML for HTTP errors."""
+    # start with the correct headers and status code from the error
+    response = e.get_response()
+    print(response)
+    # replace the body with JSON
+    response.data = jsonify({
+        "code": e.code,
+        "name": e.name,
+        "description": e.description,
+    })
+    response.content_type = "application/json"
+    return response
 
 def validate_consumer_data(json_request_data):
     schema = ConsumerSchema()
