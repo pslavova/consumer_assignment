@@ -113,10 +113,22 @@ If the application is horizontally scaled it won't work correctly.
 * Install dependencies
   * `pip3 install -r requirements.txt`
 
-* Run Consumer Group Application - there should be just one instance running
+* Build/Install/Run tests/Run Consumer Group Application - there should be just one instance running
+  * Building and installing the application
+    * `pip install consumer_group_app/`
+  * Running unit tests
+
+     ```
+     cd consumer_group_app
+     pytest
+     cd ..
+     ```
   * Redis host and port can be provided as command line parameters(*--redisServerHost \<redisHost\>*, *--redisServerPort \<redisPort\>*) or configured in config file - saved in *consumer_group_app/config/config.properties*
   * Run command example: `python consumer_group_app/src/app.py --maxConsumerGroupSize 10`
+
 * Run Consumer Application
+  * Building and installing the application
+    * `pip install consumer_app/`
   * Redis host and port can be provided as command line parameters(*--redisServerHost \<redisHost\>*, *--redisServerPort \<redisPort\>*) or configured in config file - saved in `consumer/config/config.properties`
   * If you want to run several instances of the application on the same machine you need to provide different values for rest api port. The configuration can be set through command line parameter (*--restApiPort \<port_value\>*) or in the *config.properties* file located on path *consumer/config/config.properties*
   * Run command example: `python consumer/src/app.py --restApiPort 5001`
