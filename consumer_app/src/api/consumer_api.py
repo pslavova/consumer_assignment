@@ -43,7 +43,8 @@ def process_message():
         return response
     except Exception as ex:
         uuid_ref = str(uuid.uuid4())
-        logging.exception(f"Failed to process message: {data}. Ref: {uuid_ref}", ex)
+        logging.error(f"Failed to process message: {data}. Ref: {uuid_ref}")
+        logging.exception(ex)
         error_message = f"Failed to process message! Use Ref for details: {uuid_ref}"
         response = jsonify({"error": error_message})
         response.status_code = 400

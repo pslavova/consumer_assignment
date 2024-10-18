@@ -18,7 +18,7 @@ class ConsumersGroup:
         try:
             self.redis_con_pool = redis.ConnectionPool(host=redis_host, port=redis_port)
         except redis.ConnectionError as ex:
-            logging.exception("Failed to connect to Redis server", ex)
+            logging.error("Failed to connect to Redis server")
             raise RuntimeError(ex)
 
     def add_consumer(self, id: str) -> bool:
@@ -41,12 +41,7 @@ class ConsumersGroup:
 
     def check_consumer_membership(self, id: str) -> bool:
         with redis.Redis(connection_pool=self.redis_con_pool, decode_responses=True) as connection:
-            try:
-                id_index = connection.lpos(name=ConsumersGroup.CONSUMERS_LIST_NAME, value=id)
-                return True if id_index != None else False
-            except Exception as ex:
-                logging.exception(f"Failed to check for item in list {ConsumersGroup.CONSUMERS_LIST_NAME}", ex)
-                return False
+            id_index = connection.lpos(name=ConsumersGroup.CONSUMERS_LIST_NAME, value=id)
 
     def get_all_consumers(self) -> List[str]:
         with redis.Redis(connection_pool=self.redis_con_pool, decode_responses=True) as connection:

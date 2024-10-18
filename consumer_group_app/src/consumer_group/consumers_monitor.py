@@ -28,6 +28,7 @@ class ConsumerRegistrationsMonitor:
                         self.consumer_group.remove_consumer(consumer_id)
             except Exception as ex:
                 error_msg = f"Exception raised in consumers monitoring flow. Will try again in {CHECK_INTERVAL_IN_MINUTES} minutes"
-                logging.exception(error_msg, ex)
+                logging.error(error_msg)
+                logging.exception(ex)
 
             time.sleep(CHECK_INTERVAL_IN_MINUTES * 60)

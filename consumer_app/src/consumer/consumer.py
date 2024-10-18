@@ -12,11 +12,11 @@ class Consumer:
             self.id = f"{service_host}:{service_port}"
             self.redis_con_pool = redis.ConnectionPool(host=redis_host, port=redis_port)
         except redis.ConnectionError as ex:
-            logging.exception("Failed to connect to Redis server", ex)
+            logging.error("Failed to connect to Redis server")
             raise RuntimeError(ex)
 
     def process_msg(self, msg: Dict[str, str]) -> Dict[str, str]:
-        logging.info(f"Processing msg with id {msg.get("message_id")}")
+        logging.info(f"Processing msg with id {msg.get('message_id')}")
         with redis.Redis(connection_pool=self.redis_con_pool, decode_responses=True) as connection:
             enriched_msg = {
                             "subscriber_id": self.id,

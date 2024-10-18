@@ -18,10 +18,10 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(threadName)s %(message)s
                     level=logging.INFO,
                     datefmt='%Y-%m-%d %H:%M:%S')
 
-TOTAL_PROCESSED_MESSAGES: int = 0
-TOTAL_FAILED_MESSAGES: int = 0
+PROCESSED_MESSAGES: int = 0
+FAILED_MESSAGES: int = 0
 
-PRINT_STATS_PERIOD_IN_MINUTES = 3
+PRINT_STATS_PERIOD_IN_SECONDS = 3
 
 consumer_group: ConsumersGroup = None
 
@@ -33,8 +33,8 @@ def start_flask_app(consumer_group: ConsumersGroup):
     rest_api_app.run(debug = False)
 
 def listen_for_messages(pubsub: PubSub, consumer_group: ConsumersGroup):
-    global TOTAL_PROCESSED_MESSAGES
-    global TOTAL_FAILED_MESSAGES
+    global PROCESSED_MESSAGES
+    global FAILED_MESSAGES
 
     logging.info("Starting MSG listener...")
     while True:
@@ -47,24 +47,30 @@ def listen_for_messages(pubsub: PubSub, consumer_group: ConsumersGroup):
                     consumer_client = ConsumerClient(consumer_host, consumer_port)
                     logging.info(f"Sending msg '{msg_data}' to consumer with id: {consumer_id}")
                     consumer_client.process_msg(msg_data)
-                    TOTAL_PROCESSED_MESSAGES += 1
+                    PROCESSED_MESSAGES += 1
                 except Exception as ex:
-                    logging.exception(f"Failed to process message: {msg}", ex)
-                    TOTAL_FAILED_MESSAGES += 1
-        except:
-            logging.exception(f"Listen for messages encountered a failure. Will try to connect again in 5 seconds", ex)
+                    logging.error(f"Failed to process message: {msg}")
+                    logging.exception(ex)
+                    FAILED_MESSAGES += 1
+        except Exception as ex:
+            logging.error(f"Listen for messages encountered a failure. Will try to connect again in 5 seconds")
+            logging.exception(ex)
             time.sleep(5)
 
 def print_statistics():
-    global TOTAL_PROCESSED_MESSAGES
-    global TOTAL_FAILED_MESSAGES
-    global PRINT_STATS_PERIOD_IN_MINUTES
+    global PROCESSED_MESSAGES
+    global FAILED_MESSAGES
+
+    global PRINT_STATS_PERIOD_IN_SECONDS
 
     logging.info("Starting Statistics Reporter ...")
     while True:
-        time.sleep(PRINT_STATS_PERIOD_IN_MINUTES * 60)
-        msg = f"Total messages processed: {TOTAL_PROCESSED_MESSAGES}; Total messages failed: {TOTAL_FAILED_MESSAGES}"
+        time.sleep(PRINT_STATS_PERIOD_IN_SECONDS)
+        msg = f"Processed messages per second : {PROCESSED_MESSAGES / PRINT_STATS_PERIOD_IN_SECONDS }; " \
+                + f"Total messages failed: {FAILED_MESSAGES / PRINT_STATS_PERIOD_IN_SECONDS}"
         logging.info(msg)
+        PROCESSED_MESSAGES = 0
+        FAILED_MESSAGES = 0
 
 def release_resources_on_exit(consumer_group: ConsumersGroup):
     logging.info("Unsubscribing from channel...")
